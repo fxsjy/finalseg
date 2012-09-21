@@ -5,7 +5,7 @@ Chinese Words Segment Library in Python based on HMM Model
 Usage
 ========
 * 将finalseg目录放置于当前目录或者site-packages目录
-* import finlseg
+* import finalseg
 
 
 代码示例
