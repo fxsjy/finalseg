@@ -12,23 +12,22 @@ def load_model(f_name):
 			result.add(line.strip().decode('utf-8'))
 		return result
 
-print "Init..."
+
 prob_start = load_model("prob_start.py")
 prob_trans = load_model("prob_trans.py")
 prob_emit = load_model("prob_emit.py")
 near_char_tab = load_model("near_char_tab.txt")
-print "OK."
+
 
 def __raw_seg(sentence):
-	result = []
 	i,j =0,0
 	while j<len(sentence)-1:
 		if not ( sentence[j:j+2] in near_char_tab):
-			result.append(sentence[i:j+1])
+			yield sentence[i:j+1]
 			i=j+1
 		j+=1
-	result.append(sentence[i:j+1])
-	return result
+	yield sentence[i:j+1]
+
 
 
 def viterbi(obs, states, start_p, trans_p, emit_p):
@@ -51,23 +50,19 @@ def viterbi(obs, states, start_p, trans_p, emit_p):
 
 def __cut(sentence):
 	prob, pos_list =  viterbi(sentence,('B','M','E','S'), prob_start, prob_trans, prob_emit)
-	tmp=u""
-	result =[]
+	begin, next = 0,0
 	for i,char in enumerate(sentence):
 		pos = pos_list[i]
 		if pos=='B':
-			tmp+=char
-		elif pos=='M':
-			tmp+=char
+			begin = i
 		elif pos=='E':
-			tmp+=char
-			result.append(tmp)
-			tmp=u""
+			yield sentence[begin:i+1]
+			next = i+1
 		elif pos=='S':
-			result.append(char)
-		if i==len(sentence)-1 and tmp!='' : 
-			result.append(tmp)
-	return result
+			yield char
+			next = i+1
+	if next<len(sentence):
+		yield sentence[next:]
 
 def cut(sentence,find_new_word=False):
 	if not ( type(sentence) is unicode):
@@ -77,13 +72,17 @@ def cut(sentence,find_new_word=False):
 			sentence = sentence.decode('gbk','ignore')
 	re_han, re_skip = re.compile(ur"([\u4E00-\u9FA5]+)"), re.compile(ur"[^a-zA-Z0-9+#]")
 	blocks = re_han.split(sentence)
-	result = []
+	if find_new_word: 
+		detail_seg = lambda x: (x,)
+	else:
+		detail_seg = __raw_seg
 	for blk in blocks:
 		if re_han.match(blk):
-			lbs = [blk] if find_new_word else __raw_seg(blk) 
-			for lb in lbs:
-				result.extend(__cut(lb))
+			for lb in detail_seg(blk):
+				for word in __cut(lb):
+					yield word
 		else:
 			tmp = re_skip.split(blk)
-			result.extend([x for x in tmp if x.strip()!=""])
-	return result
+			for x in tmp:
+				if x.strip()!="":
+					yield x
