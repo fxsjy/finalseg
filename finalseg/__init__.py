@@ -45,7 +45,7 @@ def viterbi(obs, states, start_p, trans_p, emit_p):
 			newpath[y] = path[state] + [y]
 		path = newpath
 	if emit_p['M'].get(obs[-1],0)> emit_p['S'].get(obs[-1],0):
-		(prob, state) = (V[len(obs) - 1]['E'], 'E')
+		(prob, state) = max([(V[len(obs) - 1][y], y) for y in ('E','M')])
 	else:
 		(prob, state) = max([(V[len(obs) - 1][y], y) for y in states])
 	
