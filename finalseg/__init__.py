@@ -1,5 +1,6 @@
 import re
 import os
+import sys
 
 def load_model(f_name):
 	_curpath=os.path.normpath( os.path.join( os.getcwd(), os.path.dirname(__file__) )  )
@@ -69,11 +70,12 @@ def __cut(sentence):
 		yield sentence[next:]
 
 def cut(sentence,find_new_word=False):
-	if not ( type(sentence) is unicode):
-		try:
-			sentence = sentence.decode('utf-8')
-		except:
-			sentence = sentence.decode('gbk','ignore')
+	if sys.version < '3.0':
+		if not ( type(sentence) is unicode):
+			try:
+				sentence = sentence.decode('utf-8')
+			except:
+				sentence = sentence.decode('gbk','ignore')
 	re_han, re_skip = re.compile(ur"([\u4E00-\u9FA5]+)"), re.compile(ur"[^a-zA-Z0-9+#\n]")
 	blocks = re_han.split(sentence)
 	if find_new_word: 
